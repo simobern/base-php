@@ -1,5 +1,5 @@
 {
-  "name": "base/base",
+  "name": "base-php/base-php",
   "require": {
     "ccampbell/chromephp": "dev-master"
   },
