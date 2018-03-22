@@ -1,4 +1,4 @@
-Base is a framework built specifically for HHVM/Hack. It does not run on PHP. We wanted to make Base simple to understand, configure and use, and possibly performant.
+Base is a PHP framework. We wanted to make Base simple to understand, configure and use, and possibly performant.
 
 Base is the ideal RAD framework, but it is also powering production apps.
 

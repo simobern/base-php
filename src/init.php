@@ -29,8 +29,8 @@ require_once 'BaseStore.php';
 require_once 'BaseWorker.php';
 require_once 'Base.php';
 
-if (array_key_exists('APPLICATION_ENV', $_ENV) &&
-  $_ENV['APPLICATION_ENV'] != 'prod') {
-  register_shutdown_function('fatal_log');
-}
+// if (array_key_exists('APPLICATION_ENV', $_ENV) &&
+//   $_ENV['APPLICATION_ENV'] != 'prod') {
+//   register_shutdown_function('fatal_log');
+// }
 Base::registerAutoloader();
