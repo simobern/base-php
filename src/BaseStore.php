@@ -76,7 +76,7 @@ abstract class BaseStore {
     }
   }
 
-  public function loadModel(array $doc = []) {
+  public function loadModel($doc = []) {
     if (!$doc) {
       return null;
     }
@@ -335,7 +335,7 @@ class BaseAggregation {
 abstract class BaseModel {
   public $_id;
   private $__model;
-  public function __construct(array $document = []) {
+  public function __construct($document = []) {
     $this->__model = get_called_class();
     foreach ($document as $key => $value) {
       if (property_exists($this, $key)) {

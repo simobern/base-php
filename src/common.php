@@ -139,10 +139,12 @@ function slugify($text) {
   return $text;
 }
 
-function invariant(
-  $condition,
-  string $format_string,
-  ...$args
-) {
+function invariant($condition, string $format_string, ...$args) {
+  if (!$condition) { // an Exception is thrown
+    invariant_violation($format_string, $args);
+  }
+}
 
+function invariant_violation($format_str, ...$fmt_args) {
+  throw new Exception(vsprintf($format_str, $fmt_args));
 }

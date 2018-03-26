@@ -992,11 +992,9 @@ class MongoInstance {
     }
 
     $dbname = array_pop(explode('/', $db_url));
-    $db = new Mongo($db_url);
-    self::$db[$db_url] = $db->selectDB($dbname);
-    if ($parts && idx($parts, 'user') && idx($parts, 'pass')) {
-      self::$db[$db_url]->authenticate($parts['user'], $parts['pass']);
-    }
+
+    $db = new MongoDB\Client($_ENV['MONGOHQ_URL']);
+    self::$db[$db_url] = $db->selectDatabase($dbname);
 
     if ($collection) {
       return $collection != null ?
