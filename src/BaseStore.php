@@ -31,20 +31,20 @@ abstract class BaseStore {
     return $this->docs;
   }
 
-  public function find(array $query = [], array $fields = []) {
+  public static function find(array $query = [], array $fields = []) {
     $i = static::i();
     $i->docs = $i->db->find($query, $fields);
     return $i;
   }
 
-  public function findOne(array $query = [], array $fields = []) {
+  public static function findOne(array $query = [], array $fields = []) {
     $i = static::i();
     $class = $i->class;
     $doc = $i->db->findOne($query, $fields);
     return $i->loadModel($doc);
   }
 
-  public function update(
+  public static function update(
     array $query,
     array $new_object,
     array $options = []
@@ -89,11 +89,11 @@ abstract class BaseStore {
     return !is_array($docs) ? [] : $docs;
   }
 
-  public function findById(MongoId $id) {
+  public static function findById(MongoId $id) {
     return static::i()->findOne(['_id' => $id]);
   }
 
-  public function count(array $query = []) {
+  public static function count(array $query = []) {
     return static::i()->db->count($query);
   }
 
@@ -101,7 +101,7 @@ abstract class BaseStore {
     return class_exists(static::i()->class) && is_a($item, $this->class);
   }
 
-  public function removeByModel(BaseModel $item) {
+  public static function removeByModel(BaseModel $item) {
     if (!static::i()->ensureType($item)) {
       throw new Exception(
         'Invalid object provided, expected ' . static::i()->class);
@@ -125,7 +125,7 @@ abstract class BaseStore {
     }
   }
 
-  public function remove(array $query = [], array $options = []) {
+  public static function remove(array $query = [], array $options = []) {
     try {
       static::i()->db->remove($query, $options);
       return true;
@@ -135,7 +135,7 @@ abstract class BaseStore {
     }
   }
 
-  public function removeById(MongoId $id) {
+  public static function removeById(MongoId $id) {
     return static::i()->remove(['_id' => $id]);
   }
 
@@ -179,7 +179,7 @@ abstract class BaseStore {
     }
   }
 
-  public function save(BaseModel &$item) {
+  public static function save(BaseModel &$item) {
     if (!static::i()->ensureType($item)) {
       throw new Exception(
         'Invalid object provided, expected ' . static::i()->class);
