@@ -749,7 +749,7 @@ class ApiRunner {
         break;
     }
 
-    $controller_path = 'controllers/' . $controller_path . '.hh';
+    $controller_path = 'controllers/' . $controller_path . '.php';
 
     if (false === strpos($controller_name, 'Controller') ||
       !file_exists($controller_path)) {
