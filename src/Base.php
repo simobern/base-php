@@ -1315,8 +1315,8 @@ class :t:p extends :x:primitive {
 
   public function stringify() {
     $children = $this->getChildren();
-    if ($children->containsKey(0)) {
-      return $children->get(0);
+    if (array_key_exists(0, $children)) {
+      return $children[0];
     }
     return;
   }
