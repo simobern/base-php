@@ -1,4 +1,5 @@
 <?php
+
 class BaseController {
   protected
     $app,
@@ -343,6 +344,7 @@ class URL {
   public function __construct(string $url = null) {
     $current_url = parse_url($this->buildCurrentURL());
     $parsed_url = [];
+
     if ($url !== null) {
       $parsed_url = parse_url($url);
       invariant($parsed_url !== false, 'Invalid URL');
@@ -353,6 +355,7 @@ class URL {
         $this->url = $parsed_url;
       }
     } else {
+      invariant($current_url !== false, 'Invalid URL');
       $this->url = $current_url;
     }
 

@@ -2,7 +2,7 @@
 chdir(__DIR__);
 chdir(realpath('../../../../'));
 
-if (getenv('APPLICATION_ENV') && getenv('APPLICATION_ENV') != 'prod') {
+if (getenv('APPLICATION_ENV') != 'prod') {
   $env_file = 'env/' . $_SERVER['SERVER_NAME'] . '.json';
   if (file_exists($env_file)) {
     $vars = json_decode(file_get_contents($env_file), true);
@@ -23,6 +23,8 @@ $_ENV['BASE_LOG_FILE'] = str_replace(
   $_ENV['PORT'],
   $_ENV['BASE_LOG_FILE']);
 
+require_once 'vendor/phplang/xhp-lib/core.php';
+require_once 'vendor/phplang/xhp-lib/html.php';
 require_once 'common.php';
 require_once 'BaseParam.php';
 require_once 'BaseStore.php';
