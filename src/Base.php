@@ -718,8 +718,10 @@ class ApiRunner {
     if (false === $controller_path) {
       return $this->notFound();
     }
-
-    $controller_name = array_pop(explode('/', $controller_path));
+  
+    $controller_path_parts = explode('/', $controller_path);
+    $controller_name = array_pop($controller_path_parts);
+    
     switch ($method) {
       case 'GET':
           $controller_name .= 'Controller';
@@ -952,7 +954,6 @@ class Base {
         $widget = array_pop($widget_type);
         require 'widgets' . DIRECTORY_SEPARATOR . $widget . '.php';
       }
-
     });
   }
 }
@@ -994,10 +995,11 @@ class MongoInstance {
         self::$db[$db_url];
     }
 
-    $dbname = array_pop(explode('/', $db_url));
+    $db_url_parts = explode('/', $db_url);
+    $dbname = array_pop($db_url_parts);
 
-    $db = new MongoDB\Client($_ENV['MONGOHQ_URL']);
-    self::$db[$db_url] = $db->selectDatabase($dbname);
+    $db = new MongoClient($_ENV['MONGOHQ_URL']);
+    self::$db[$db_url] = $db->selectDB($dbname);
 
     if ($collection) {
       return $collection != null ?
