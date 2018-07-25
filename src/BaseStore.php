@@ -354,12 +354,18 @@ final class BaseType {
       case 'Bool':
       case 'Float':
       case 'Double':
+      case 'Any':
         $this->type = strtolower($name);
         return $this;
       case 'type':
         return $this->type;
       default:
-        invariant(class_exists($name), sprintf('Model %s does not exist', $name));
+        invariant(class_exists($name), 'Class %s does not exist', $name);
+        invariant(
+          is_subclass_of($name, BaseModel::class) || 
+          is_subclass_of($name, BaseEnum::class),
+          'Invalid custom type: %s must be BaseModel or BaseEnum',
+          $name);
         invariant($this->type === null, 'You already set a type for this field');
         $this->type = $name;
         return $this;
@@ -374,22 +380,7 @@ final class BaseType {
     $this->ref = new BaseRef($model);
   }
   
-  public function check($value) {
-    if ($value === null) {
-      invariant($this->isNullable === true, 'Type error: field is not nullable');
-      return true;
-    }
-
-    if ($this->isArray) {
-      invariant(is_array($value), 'Type error: value is not array');
-      array_map(call_user_func($this, 'check'), $value);
-    }
-
-
-    if ($this->ref) {
-      invariant(idx($this->ref->document(), '__ref'), 'No BaseRef set');
-    }
-
+  protected function checkType($value) {
     switch ($this->type) {
       case 'int':
       case 'string':
@@ -403,15 +394,35 @@ final class BaseType {
         break;
       default:
         invariant(
-          class_exists($this->type), 
-          'Model %s does not exist',
-          $this->type);
-        
-        invariant(
           is_a($value, $this->type),
           'Type error: expected %s',
           $this->type);
     }
+    return true;
+  }
+  
+  public function check($value) {
+    if ($value === null) {
+      invariant($this->isNullable === true, 'Type error: field is not nullable');
+      return true;
+    }
+
+    if ($this->isArray) {
+      invariant(is_array($value), 'Type error: value is not array');
+      array_map([$this, 'checkType'], $value);
+      return true;
+    }
+
+
+    if ($this->ref) {
+      invariant(idx($this->ref->document(), '__ref'), 'No BaseRef set');
+    }
+    
+    if ($this->type === 'Any') {
+      return true;
+    }
+
+    $this->checkType($value);
     
     return true;
   }
@@ -424,14 +435,17 @@ abstract class BaseModel {
   private $typesDeclared = false;
   
   abstract public function declareTypes();
+  public function init() {}
   
-  public function __construct($document = []) {
+  final public function __construct($document = []) {
     $this->declareTypes();
+    $this->_id = type()->MongoId;
     $this->typesDeclared = true;
+    $this->init();
     $this->__model = get_called_class();
     
     foreach ($document as $key => $value) {
-      if (property_exists($this, $key)) {        
+      if (idx($this->__types, $key)) {        
         $this->$key = $key == '_id' ? mid($value) : $value;
 
         if (is_array($value)) {
@@ -457,10 +471,13 @@ abstract class BaseModel {
                 $model->_id = idx($v, '_id');
                 $refs[$k] = BaseRef::fromModel($model);
               } else {
-                $refs[$k] = $v;
+                $type = $this->types[$key];
+                $refs[$k] =
+                  is_subclass_of($type, BaseEnum::class) ?
+                  new $type($v) :
+                  $v;
               }
             }
-
             $this->$key = $refs;
           }
         }
@@ -497,10 +514,12 @@ abstract class BaseModel {
   }
 
   public function document() {
-    $document = get_object_vars($this);
+    $document = $this->__values;
     foreach ($document as &$item) {
       if ($item instanceof BaseRef || $item instanceof BaseModel) {
         $item = $item->document();
+      } elseif ($item instanceof BaseEnum) {
+        $item = $item->value();
       } elseif (is_array($item)) {
         foreach ($item as &$i) {
           $i = $i instanceof BaseRef || $i instanceof BaseModel ?

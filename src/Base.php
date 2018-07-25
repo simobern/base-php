@@ -875,24 +875,14 @@ abstract class BaseEnum {
   }
 
   protected final function setValue($key) {
-    if (static::isValid($key)) {
-      $this->value = constant(static::class . '::' . $key);
-    } else {
-      throw new InvalidArgumentException(
-        sprintf(
-          'Could not find enumeration %s in %s',
-          $key,
-          get_class($this)));
-    }
-  }
-
-  protected static final function isValid($key) {
-    return defined(static::class . '::' . $key);
-  }
-
-  public static final function validValues() {
-    $r = new ReflectionClass(get_called_class());
-    return array_keys($r->getConstants());
+    $reflection = new ReflectionClass(static::class);
+    $constants = $reflection->getConstants();
+    
+    invariant(in_array($key, $constants),
+      '%s is not a constant in %s',
+      $key,
+      static::class);
+      $this->value = $key;
   }
 
   public final function value() {
