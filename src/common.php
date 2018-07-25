@@ -145,6 +145,6 @@ function invariant($condition, string $format_string, ...$args) {
   }
 }
 
-function invariant_violation($format_str, ...$fmt_args) {
+function invariant_violation($format_str, $fmt_args = []) {
   throw new Exception(vsprintf($format_str, $fmt_args));
 }

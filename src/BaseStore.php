@@ -332,13 +332,106 @@ class BaseAggregation {
   }
 }
 
+function type() {
+  return new BaseType();
+}
+
+final class BaseType {
+  protected $type = null;
+  protected $isArray = false;
+  protected $isNullable = false;
+  protected $ref;
+  
+  public function __get($name) {
+    switch ($name) {
+      case 'array':
+      case 'nullable':
+        $var = 'is' . ucfirst($name);
+        $this->$var = true;
+        return $this;
+      case 'Int':
+      case 'String':
+      case 'Bool':
+      case 'Float':
+      case 'Double':
+        $this->type = strtolower($name);
+        return $this;
+      case 'type':
+        return $this->type;
+      default:
+        invariant(class_exists($name), sprintf('Model %s does not exist', $name));
+        invariant($this->type === null, 'You already set a type for this field');
+        $this->type = $name;
+        return $this;
+    }
+  }
+  
+  public function ref($model) {
+    invariant(
+      is_a($model, BaseModel::class),
+      'Invalid model: %s must be an instance of BaseModel',
+      get_class_name($model));
+    $this->ref = new BaseRef($model);
+  }
+  
+  public function check($value) {
+    if ($value === null) {
+      invariant($this->isNullable === true, 'Type error: field is not nullable');
+      return true;
+    }
+
+    if ($this->isArray) {
+      invariant(is_array($value), 'Type error: value is not array');
+      array_map(call_user_func($this, 'check'), $value);
+    }
+
+
+    if ($this->ref) {
+      invariant(idx($this->ref->document(), '__ref'), 'No BaseRef set');
+    }
+
+    switch ($this->type) {
+      case 'int':
+      case 'string':
+      case 'bool':
+      case 'float':
+      case 'double':
+        invariant(
+          call_user_func('is_' . $this->type, $value),
+          'Type error: expected %s',
+          $this->type);
+        break;
+      default:
+        invariant(
+          class_exists($this->type), 
+          'Model %s does not exist',
+          $this->type);
+        
+        invariant(
+          is_a($value, $this->type),
+          'Type error: expected %s',
+          $this->type);
+    }
+    
+    return true;
+  }
+}
+
 abstract class BaseModel {
-  public $_id;
   private $__model;
+  private $__types;
+  private $__values;
+  private $typesDeclared = false;
+  
+  abstract public function declareTypes();
+  
   public function __construct($document = []) {
+    $this->declareTypes();
+    $this->typesDeclared = true;
     $this->__model = get_called_class();
+    
     foreach ($document as $key => $value) {
-      if (property_exists($this, $key)) {
+      if (property_exists($this, $key)) {        
         $this->$key = $key == '_id' ? mid($value) : $value;
 
         if (is_array($value)) {
@@ -376,21 +469,31 @@ abstract class BaseModel {
   }
 
   public function __set($name, $value) {
-    if (get_called_class() !== 'BaseModel') {
-      invariant_violation(
-        'Cannot set field %s in %s: field does not exist',
-        $name,
-        get_called_class());
+    if ($this->typesDeclared === false) {
+      $this->__types[$name] = $value;
+      return;
     }
+
+    invariant(
+      idx($this->__types, $name),
+      'Cannot set field %s in %s: field does not exist',
+      $name,
+      get_called_class());
+
+    if ($this->__types[$name]->check($value)) {
+      $this->__values[$name] = $value;
+    }
+    
   }
 
   public function __get($name) {
-    if (get_called_class() !== 'BaseModel') {
-      invariant_violation(
-        'Cannot get field %s in %s: field does not exist',
-        $name,
-        get_called_class());
-    }
+    invariant(
+      idx($this->__types, $name),
+      'Cannot set field %s in %s: field does not exist',
+      $name,
+      get_called_class());
+    
+    return $this->__values[$name] ?? null;
   }
 
   public function document() {
