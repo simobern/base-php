@@ -863,15 +863,34 @@ abstract class BaseEnum {
 
     return new static($name);    
   }
-
-  public final function __construct($key = '__default') {
-    $this->setValue($key);
+  
+  public static function fromValue($value) {
+    $reflection = new ReflectionClass(static::class);
+    $constants = $reflection->getConstants();
+    $keys_from_values = array_flip($constants);
+    invariant(array_key_exists($value, $keys_from_values),
+      '%s is not a value in %s',
+      $value,
+      static::class);
+    
+    return new static($keys_from_values[$value]);
   }
 
-  protected final function setValue($key) {
+  protected final function __construct($value = '__default') {
     $reflection = new ReflectionClass($this);
     $constants = $reflection->getConstants();
-    $this->value = $constants[$key];
+
+    invariant(count($constants) === count(array_unique($constants)),
+      '%s: duplicate values found. All values must be unique',
+      get_called_class());
+    
+    $this->setValue($value);
+  }
+
+  protected final function setValue($value) {
+    $reflection = new ReflectionClass($this);
+    $constants = $reflection->getConstants();
+    $this->value = $constants[$value];
   }
 
   public final function value() {

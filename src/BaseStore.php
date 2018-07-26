@@ -357,8 +357,11 @@ final class BaseType {
       case 'Any':
         $this->type = strtolower($name);
         return $this;
+      case 'isArray':
+      case 'isNullable':
+      case 'isRef':
       case 'type':
-        return $this->type;
+        return $this->$name;
       default:
         invariant(class_exists($name), 'Class %s does not exist', $name);
         invariant(
@@ -444,17 +447,21 @@ abstract class BaseModel {
     $this->init();
     $this->__model = get_called_class();
     
+    $document = (array)$document;
     foreach ($document as $key => $value) {
-      if (idx($this->__types, $key)) {        
-        $this->$key = $key == '_id' ? mid($value) : $value;
-
+      if ($key === '_id') {
+        $this->$key = $value;
+        continue;
+      }
+      
+      if (idx($this->__types, $key)) {
         if (is_array($value)) {
           if (idx($value, '__model') && !idx($value, '__ref')) {
-            $model_name = idx($value, '__model');
+            $model_name = idx($value, '__model', $this->__types[$key]->type);
             $model = new $model_name($value);
             $this->$key = $model;
           } elseif (idx($value, '__ref')) {
-            $model_name = idx($value, '__model');
+            $model_name = idx($value, '__model', $this->__types[$key]->type);
             $model = new $model_name();
             $model->_id = idx($value, '_id');
             $this->$key = BaseRef::fromModel($model);
@@ -462,16 +469,16 @@ abstract class BaseModel {
             $refs = [];
             foreach ($value as $k => $v) {
               if (idx($v, '__model') && !idx($v, '__ref')) {
-                $model_name = idx($v, '__model');
+                $model_name = idx($value, '__model', $this->__types[$key]->type);
                 $model = new $model_name($v);
                 $refs[$k] = $model;
-              } elseif (idx($v, '__ref')) {
-                $model_name = idx($v, '__model');
+              } elseif (idx($value, '__ref')) {
+                $model_name = idx($value, '__model', $this->__types[$key]->type);
                 $model = new $model_name();
                 $model->_id = idx($v, '_id');
                 $refs[$k] = BaseRef::fromModel($model);
               } else {
-                $type = $this->types[$key];
+                $type = $this->__types[$key];
                 $refs[$k] =
                   is_subclass_of($type, BaseEnum::class) ?
                   new $type($v) :
@@ -480,6 +487,12 @@ abstract class BaseModel {
             }
             $this->$key = $refs;
           }
+        } else {
+          $type = $this->__types[$key]->type;
+          $this->$key =
+            is_subclass_of($type, BaseEnum::class) ?
+            call_user_func($type . '::fromValue', $value) :
+            $value;
         }
       }
     }
@@ -515,9 +528,7 @@ abstract class BaseModel {
 
   public function document() {
     $document = $this->__values;
-    if ($document === null) {
-      return new class{};
-    }
+    $document['__model'] = get_called_class();
     
     foreach ($document as &$item) {
       if ($item instanceof BaseRef) {
