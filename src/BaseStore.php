@@ -363,8 +363,10 @@ final class BaseType {
         invariant(class_exists($name), 'Class %s does not exist', $name);
         invariant(
           is_subclass_of($name, BaseModel::class) || 
-          is_subclass_of($name, BaseEnum::class),
-          'Invalid custom type: %s must be BaseModel or BaseEnum',
+          is_subclass_of($name, BaseEnum::class) ||
+          $name === MongoId::class ||
+          $name === MongoDate::class,
+          'Invalid custom type: %s must be BaseModel, BaseEnum, MongoId or MongoDate',
           $name);
         invariant($this->type === null, 'You already set a type for this field');
         $this->type = $name;
@@ -413,7 +415,6 @@ final class BaseType {
       return true;
     }
 
-
     if ($this->ref) {
       invariant(idx($this->ref->document(), '__ref'), 'No BaseRef set');
     }
@@ -422,8 +423,7 @@ final class BaseType {
       return true;
     }
 
-    $this->checkType($value);
-    
+    $this->checkType($value);    
     return true;
   }
 }
@@ -515,9 +515,15 @@ abstract class BaseModel {
 
   public function document() {
     $document = $this->__values;
+    if ($document === null) {
+      return new class{};
+    }
+    
     foreach ($document as &$item) {
-      if ($item instanceof BaseRef || $item instanceof BaseModel) {
+      if ($item instanceof BaseRef) {
         $item = $item->document();
+      } elseif ($item instanceof BaseModel) {
+        $item = $item === null ? new class{} : $item->document();
       } elseif ($item instanceof BaseEnum) {
         $item = $item->value();
       } elseif (is_array($item)) {

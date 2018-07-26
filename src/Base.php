@@ -856,18 +856,12 @@ abstract class BaseEnum {
    * AVeryLongEnumName::MY_VALUE()
    */
   public static function __callStatic($name, $args) {
-    $const = static::class . '::' . $name;
-    if (!defined($const)) {
-      throw new InvalidArgumentException(
-        sprintf(
-          'Could not find enumeration %s in %s',
-          $name,
-          static::class));
+    invariant(defined(static::class . '::' . $name),
+      '%s is not a constant in %s',
+      $name,
+      static::class);
 
-      return null;
-    } else {
-      return new static($name);
-    }
+    return new static($name);    
   }
 
   public final function __construct($key = '__default') {
@@ -875,14 +869,9 @@ abstract class BaseEnum {
   }
 
   protected final function setValue($key) {
-    $reflection = new ReflectionClass(static::class);
+    $reflection = new ReflectionClass($this);
     $constants = $reflection->getConstants();
-    
-    invariant(in_array($key, $constants),
-      '%s is not a constant in %s',
-      $key,
-      static::class);
-      $this->value = $key;
+    $this->value = $constants[$key];
   }
 
   public final function value() {
