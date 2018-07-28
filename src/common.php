@@ -1,4 +1,6 @@
 <?php
+use MongoDB\BSON\ObjectId as MongoId;
+use MongoDB\BSON\UTCDateTime as MongoDate;
 function l() {
   $args = func_get_args();
   $output = array();

@@ -1,4 +1,7 @@
 <?php
+use MongoDB\BSON\ObjectId as MongoId;
+use MongoDB\BSON\UTCDateTime as MongoDate;
+
 abstract class BaseStore {
 
   protected $class;
@@ -357,6 +360,12 @@ final class BaseType {
       case 'Any':
         $this->type = strtolower($name);
         return $this;
+      case 'MongoId':
+        $this->type = '\MongoDB\BSON\ObjectId';
+        return $this;
+      case 'MongoDate':
+        $this->type = '\MongoDB\BSON\UTCDateTime';
+        return $this;
       case 'isArray':
       case 'isNullable':
       case 'isRef':
@@ -367,9 +376,7 @@ final class BaseType {
         invariant(
           is_subclass_of($name, BaseModel::class) || 
           is_subclass_of($name, BaseEnum::class) ||
-          $name === MongoId::class ||
-          $name === MongoDate::class,
-          'Invalid custom type: %s must be BaseModel, BaseEnum, MongoId or MongoDate',
+          'Invalid custom type: %s must be BaseModel or BaseEnum',
           $name);
         invariant($this->type === null, 'You already set a type for this field');
         $this->type = $name;
