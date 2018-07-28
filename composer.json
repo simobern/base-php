@@ -4,8 +4,9 @@
     "ccampbell/chromephp": "dev-master"
   },
   "autoload": {
-    "files": [
-      "src/*"
-    ]
+    "classmap": [
+      "src/"
+    ],
+    "files": ["src/init.php"]
   }
 }
