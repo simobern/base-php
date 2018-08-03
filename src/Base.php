@@ -717,10 +717,10 @@ class ApiRunner {
     if (false === $controller_path) {
       return $this->notFound();
     }
-  
+
     $controller_path_parts = explode('/', $controller_path);
     $controller_name = array_pop($controller_path_parts);
-    
+
     switch ($method) {
       case 'GET':
           $controller_name .= 'Controller';
@@ -860,9 +860,9 @@ abstract class BaseEnum {
       $name,
       static::class);
 
-    return new static($name);    
+    return new static($name);
   }
-  
+
   public static function fromValue($value) {
     $reflection = new ReflectionClass(static::class);
     $constants = $reflection->getConstants();
@@ -871,7 +871,7 @@ abstract class BaseEnum {
       '%s is not a value in %s',
       $value,
       static::class);
-    
+
     return new static($keys_from_values[$value]);
   }
 
@@ -882,7 +882,7 @@ abstract class BaseEnum {
     invariant(count($constants) === count(array_unique($constants)),
       '%s: duplicate values found. All values must be unique',
       get_called_class());
-    
+
     $this->setValue($value);
   }
 
@@ -995,8 +995,8 @@ class MongoInstance {
     $db_url_parts = explode('/', $db_url);
     $dbname = array_pop($db_url_parts);
 
-    $db = new MongoClient($_ENV['MONGOHQ_URL']);
-    self::$db[$db_url] = $db->selectDB($dbname);
+    $db = new MongoDB\Client($_ENV['MONGOHQ_URL']);
+    self::$db[$db_url] = $db->selectDatabase($dbname);
 
     if ($collection) {
       return $collection != null ?
