@@ -31,11 +31,12 @@ function ls() {
 }
 
 function logger($message, $file = null, $line = null) {
-  $resource = fopen($_ENV['BASE_LOG_FILE'], 'a+w');
-  $log = sprintf('[%s:%d] %s',
-    $file, $line, $message);
+  // $resource = fopen($_ENV['BASE_LOG_FILE'], 'a+w');
+  // $log = sprintf('[%s:%d] %s',
+  //   $file, $line, $message);
 
-  fwrite($resource, $log);
+  // fwrite($resource, $log);
+  error_log($file.' ['.$line.']: '.$message);
   if (idx($_ENV, 'APPLICATION_ENV') !== 'prod' &&
     idx($_ENV, 'CHROME_LOGGING_ENABLED') &&
     idx($_ENV, 'WORKER_SCRIPT') == false) {
